@@ -13,23 +13,24 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun DropdownLang(
-    itemSelection : List<String>,
+    itemSelection: List<String>,
     selectedIndex: Int,
     expand: Boolean,
     onClickExpanded: () -> Unit,
     onClickDismiss: () -> Unit,
     onClickItem: (index:Int) -> Unit,
-){
-    Box( ){
-        OutlinedButton(onClick = { onClickExpanded()}) {
+) {
+    Box() {
+        OutlinedButton(onClick = { onClickExpanded() }) {
             Text(text = itemSelection[selectedIndex])
             Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "")
         }
         DropdownMenu(expanded = expand, onDismissRequest = { onClickDismiss() }) {
-            itemSelection.forEachIndexed{index, item ->
+            itemSelection.forEachIndexed { index, item ->
                 DropdownMenuItem(
                     text = { Text(text = item) },
-                    onClick = { onClickItem(index) })
+                    onClick = { onClickItem(index) }
+                )
             }
         }
 
