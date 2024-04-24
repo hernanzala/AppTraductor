@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AppTraductor</string>
+    <string name="title">Hello word</string>
+    <string name="subtitle">The World is yours</string>
 </resources>
