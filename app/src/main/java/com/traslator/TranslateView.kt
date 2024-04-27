@@ -1,5 +1,6 @@
 package com.traslator
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +35,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+import com.example.apptraductor.R
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalPermissionsApi::class
+)
 @Composable
 fun TranslateView(viewModel: TranslateViewModel) {
 
@@ -42,12 +51,24 @@ fun TranslateView(viewModel: TranslateViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val languageOptions = viewModel.languageOptions
     val itemSelection = viewModel.itemSelection
+    val itemVoice = viewModel.itemsVoice
     var indexSource by remember { mutableIntStateOf(0) }
     var indexTarget by remember { mutableIntStateOf(1) }
     var expandSource by remember { mutableStateOf(false) }
     var expandTarget by remember { mutableStateOf(false) }
     var selectedSourceLang by remember { mutableStateOf(languageOptions[0]) }
     var selectedTargetLang by remember { mutableStateOf(languageOptions[1]) }
+    var selectedTargetVoice by remember { mutableStateOf(itemVoice[1]) }
+    val permissionState = rememberPermissionState(permission = android.Manifest.permission.RECORD_AUDIO)
+
+    SideEffect {
+        permissionState.launchPermissionRequest()
+    }
+    val speechRecognitionLauncher = rememberLauncherForActivityResult(
+        contract = SpeechRecognizerContract(),
+        onResult = {
+            viewModel.onValue(it.toString().replace("[","").replace("]","").trimStart())
+        })
 
     Column(
         modifier = Modifier
@@ -86,6 +107,7 @@ fun TranslateView(viewModel: TranslateViewModel) {
                 onClickItem = { index ->
                     indexTarget = index
                     selectedTargetLang = languageOptions[index]
+                    selectedTargetVoice = itemVoice[index]
                     expandTarget = false
                 },
             )
@@ -119,6 +141,33 @@ fun TranslateView(viewModel: TranslateViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
         )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+           MainIconButton(icon = R.drawable.mic) {
+                if (permissionState.status.isGranted){
+                    speechRecognitionLauncher.launch(Unit)
+                }else{
+                   permissionState.launchPermissionRequest()
+                }
+           }
+            MainIconButton(icon = R.drawable.translate) {
+                viewModel.onTranslate(
+                    state.texToTranslate,
+                    context,
+                    selectedSourceLang,
+                    selectedTargetLang
+                )
+
+            }
+            MainIconButton(icon = R.drawable.speak) {
+                viewModel.textToSpeech(context, selectedTargetVoice)
+
+
+            }
+            MainIconButton(icon = R.drawable.delete) {
+                viewModel.clean()
+            }
+        }
 
         if (state.isDownloading) {
             CircularProgressIndicator()
