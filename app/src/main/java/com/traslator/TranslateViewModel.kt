@@ -1,7 +1,9 @@
 package com.traslator
 
 import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.widget.Toast
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +13,7 @@ import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
+import java.util.Locale
 
 class TranslateViewModel: ViewModel() {
 
@@ -32,6 +35,13 @@ class TranslateViewModel: ViewModel() {
         "ENGLISH",
         "ITALIAN",
         "FRENCH",
+    )
+
+    val itemsVoice = listOf(
+        Locale.ROOT,
+        Locale.ENGLISH,
+        Locale.ITALIAN,
+        Locale.FRENCH,
     )
 
     fun onTranslate(text : String, context : Context, sourceLang: String, targetLang: String){
@@ -77,5 +87,33 @@ class TranslateViewModel: ViewModel() {
                 Toast.makeText(context, "Fallo la descarga del modedlo", Toast.LENGTH_SHORT).show()
             }
 
+    }
+
+    fun clean(){
+        state = state.copy(
+            texToTranslate = "",
+            translateText = ""
+        )
+    }
+
+    private var textToSpeech : TextToSpeech? = null
+
+    fun textToSpeech(context: Context, void: Locale){
+        textToSpeech = TextToSpeech(
+            context
+        ){
+            if(it == TextToSpeech.SUCCESS){
+              textToSpeech?.let { txtToSpeech ->
+                  txtToSpeech.language = void
+                  txtToSpeech.setSpeechRate(1.0f)
+                  txtToSpeech.speak(
+                      state.translateText,
+                      TextToSpeech.QUEUE_ADD,
+                      null,
+                      null
+                  )
+              }
+            }
+        }
     }
 }
